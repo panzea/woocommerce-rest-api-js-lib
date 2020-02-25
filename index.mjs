@@ -1,8 +1,6 @@
 "use strict";
 
 import axios from "axios";
-import createHmac from "create-hmac";
-import OAuth from "oauth-1.0a";
 import Url from "url-parse";
 
 /**
@@ -27,12 +25,8 @@ export default class WooCommerceRestApi {
       throw new OptionsException("url is required");
     }
 
-    if (!opt.consumerKey) {
-      throw new OptionsException("consumerKey is required");
-    }
-
-    if (!opt.consumerSecret) {
-      throw new OptionsException("consumerSecret is required");
+    if (!opt.jwtToken) {
+      throw new OptionsException("jwtToken is required");
     }
 
     this.classVersion = "1.0.1";
@@ -48,11 +42,8 @@ export default class WooCommerceRestApi {
     this.url = opt.url;
     this.wpAPIPrefix = opt.wpAPIPrefix || "wp-json";
     this.version = opt.version || "wc/v3";
-    this.isHttps = /^https/i.test(this.url);
-    this.consumerKey = opt.consumerKey;
-    this.consumerSecret = opt.consumerSecret;
+    this.jwtToken = opt.jwtToken;
     this.encoding = opt.encoding || "utf8";
-    this.queryStringAuth = opt.queryStringAuth || false;
     this.port = opt.port || "";
     this.timeout = opt.timeout;
     this.axiosConfig = opt.axiosConfig || {};
@@ -82,48 +73,6 @@ export default class WooCommerceRestApi {
   }
 
   /**
-   * Normalize query string for oAuth
-   *
-   * @param  {String} url
-   * @param  {Object} params
-   *
-   * @return {String}
-   */
-  _normalizeQueryString(url, params) {
-    // Exit if don't find query string.
-    if (url.indexOf("?") === -1 && Object.keys(params).length === 0) {
-      return url;
-    }
-
-    const query = new Url(url, null, true).query;
-    const values = [];
-
-    let queryString = "";
-
-    // Include params object into URL.searchParams.
-    this._parseParamsObject(params, query);
-
-    for (const key in query) {
-      values.push(key);
-    }
-    values.sort();
-
-    for (const i in values) {
-      if (queryString.length) {
-        queryString += "&";
-      }
-
-      queryString += encodeURIComponent(values[i])
-        .replace(/%5B/g, "[")
-        .replace(/%5D/g, "]");
-      queryString += "=";
-      queryString += encodeURIComponent(query[values[i]]);
-    }
-
-    return url.split("?")[0] + "?" + queryString;
-  }
-
-  /**
    * Get URL
    *
    * @param  {String} endpoint
@@ -145,34 +94,9 @@ export default class WooCommerceRestApi {
       url = url.replace(hostname, hostname + ":" + this.port);
     }
 
-    if (!this.isHttps) {
-      return this._normalizeQueryString(url, params);
-    }
-
     return url;
   }
 
-  /**
-   * Get OAuth
-   *
-   * @return {Object}
-   */
-  _getOAuth() {
-    const data = {
-      consumer: {
-        key: this.consumerKey,
-        secret: this.consumerSecret
-      },
-      signature_method: "HMAC-SHA256",
-      hash_function: (base, key) => {
-        return createHmac("sha256", key)
-          .update(base)
-          .digest("base64");
-      }
-    };
-
-    return new OAuth(data);
-  }
 
   /**
    * Do requests
@@ -209,26 +133,10 @@ export default class WooCommerceRestApi {
       headers
     };
 
-    if (this.isHttps) {
-      if (this.queryStringAuth) {
-        options.params = {
-          consumer_key: this.consumerKey,
-          consumer_secret: this.consumerSecret
-        };
-      } else {
-        options.auth = {
-          username: this.consumerKey,
-          password: this.consumerSecret
-        };
-      }
+    // Set the authorization header
+    headers["Authorization"] = `Bearer: ${this.jwtToken}`
 
-      options.params = { ...options.params, ...params };
-    } else {
-      options.params = this._getOAuth().authorize({
-        url: url,
-        method: method
-      });
-    }
+    options.params = { ...options.params, ...params };
 
     if (data) {
       options.headers["Content-Type"] = "application/json;charset=utf-8";

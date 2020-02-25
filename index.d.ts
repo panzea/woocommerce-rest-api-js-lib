@@ -1,5 +1,3 @@
-import * as OAuth from 'oauth-1.0a'
-
 export declare type WooCommerceRestApiVersion =
   | 'wc/v3'
   | 'wc/v2'
@@ -18,18 +16,14 @@ export declare type WooCommerceRestApiMethod =
 export interface IWooCommerceRestApiOptions {
   /* Your Store URL, example: http://woo.dev/ */
   url: string
-  /* Your API consumer key */
-  consumerKey: string
-  /* 	Your API consumer secret */
-  consumerSecret: string
+  /* Your API JWT Token */
+  jwtToken: string
   /* Custom WP REST API URL prefix, used to support custom prefixes created with the `rest_url_prefix filter` */
   wpAPIPrefix?: string
   /* API version, default is `v3` */
   version?: WooCommerceRestApiVersion
   /* Encoding, default is 'utf-8' */
   encoding?: WooCommerceRestApiEncoding
-  /* When `true` and using under HTTPS force Basic Authentication as query string, default is `false` */
-  queryStringAuth?: boolean
   /* Provide support for URLs with ports, eg: `8080` */
   port?: number
   /* Define the request timeout */
@@ -50,12 +44,10 @@ export interface IWooCommerceRestApiQuery {
 export default class WooCommerceRestApi {
   protected classVersion: string
   protected url: string
-  protected consumerKey: string
-  protected consumerSecret: string
+  protected jwtToken: string
   protected wpAPIPrefix: string
   protected version: WooCommerceRestApiVersion
   protected encoding: WooCommerceRestApiEncoding
-  protected queryStringAuth: boolean
   protected port: number
   protected timeout: number
   protected axiosConfig: any
@@ -83,16 +75,6 @@ export default class WooCommerceRestApi {
   private _parseParamsObject(params: any, query: any): IWooCommerceRestApiQuery
 
   /**
-   * Normalize query string for oAuth
-   *
-   * @param  {String} url
-   * @param  {Object} params
-   *
-   * @return {String}
-   */
-  private _normalizeQueryString(url: string, params: any): string
-
-  /**
    * Get URL
    *
    * @param  {String} endpoint
@@ -101,13 +83,6 @@ export default class WooCommerceRestApi {
    * @return {String}
    */
   private _getUrl(endpoint: string, params: any): string
-
-  /**
-   * Get OAuth
-   *
-   * @return {Object}
-   */
-  private _getOAuth(): OAuth
 
   /**
    * Do requests
