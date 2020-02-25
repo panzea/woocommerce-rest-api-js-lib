@@ -134,7 +134,7 @@ export default class WooCommerceRestApi {
     };
 
     // Set the authorization header
-    headers["Authorization"] = `Bearer: ${this.jwtToken}`
+    headers["Authorization"] = `Bearer ${this.jwtToken}`
 
     options.params = { ...options.params, ...params };
 
