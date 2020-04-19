@@ -25,9 +25,9 @@ export default class WooCommerceRestApi {
       throw new OptionsException("url is required");
     }
 
-    if (!opt.jwtToken) {
-      throw new OptionsException("jwtToken is required");
-    }
+    // if (!opt.jwtToken) {
+    //   throw new OptionsException("jwtToken is required");
+    // }
 
     this.classVersion = "1.0.1";
     this._setDefaultsOptions(opt);
@@ -97,7 +97,6 @@ export default class WooCommerceRestApi {
     return url;
   }
 
-
   /**
    * Do requests
    *
@@ -112,7 +111,7 @@ export default class WooCommerceRestApi {
     const url = this._getUrl(endpoint, params);
 
     const headers = {
-      Accept: "application/json"
+      Accept: "application/json",
     };
     // only set "User-Agent" in node environment
     // the checking method is identical to upstream axios
@@ -130,11 +129,13 @@ export default class WooCommerceRestApi {
       responseEncoding: this.encoding,
       timeout: this.timeout,
       responseType: "json",
-      headers
+      headers,
     };
 
     // Set the authorization header
-    headers["Authorization"] = `Bearer ${this.jwtToken}`
+    if (this.jwtToken) {
+      headers["Authorization"] = `Bearer ${this.jwtToken}`;
+    }
 
     options.params = { ...options.params, ...params };
 
